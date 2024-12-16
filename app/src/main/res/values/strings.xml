@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">The Pluto Code Challenge</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="start_data_collection">Start data collection</string>
+    <string name="stop_data_collection">Stop data collection</string>
+</resources>
