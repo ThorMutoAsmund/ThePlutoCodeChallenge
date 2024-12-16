@@ -2,6 +2,8 @@ package org.nafai.theplutocodechallenge
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import org.nafai.theplutocodechallenge.databinding.ActivityMainBinding
 import org.nafai.theplutocodechallenge.data.*
 
@@ -28,7 +30,9 @@ class MainActivity : AppCompatActivity() {
         binding.dataCollectionButton.let { button ->
             button.setOnClickListener {
                 if (DataCollector.isRunning) {
-                    DataCollector.stop()
+                    lifecycleScope.launch {
+                        DataCollector.stop()
+                    }
                 }
                 else {
                     DataCollector.start(this.applicationContext)

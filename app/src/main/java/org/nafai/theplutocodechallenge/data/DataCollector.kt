@@ -75,6 +75,7 @@ object DataCollector: SensorEventListener {
         event?.let {
             when (it.sensor) {
                 accelerometer -> {
+
                     dataStorage?.addAccelerometerData(SensorData(timestamp=it.timestamp, x=it.values[0], y=it.values[1], z=it.values[2]))
                 }
                 gyroscope -> {
