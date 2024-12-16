@@ -36,7 +36,6 @@ object DataCollector: SensorEventListener {
         }
 
         dataStorage?.flushData()
-
         sensorManager?.unregisterListener(this)
 
         isRunning = false
