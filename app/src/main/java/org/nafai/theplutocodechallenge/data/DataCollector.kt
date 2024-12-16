@@ -6,8 +6,8 @@ import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
 
-// Create singleton object that lives throughout the application scope
-object DataCollector: SensorEventListener {
+// Class for collecting sensor data and persisting them to an SQLite database
+class DataCollector(applicationContext: Context): SensorEventListener {
     var isRunning = false
         private set
 
@@ -21,6 +21,17 @@ object DataCollector: SensorEventListener {
     private var gyroscope: Sensor? = null
 
     private var dataStorage: DataStorage? = null
+
+    init {
+        // If context not already set, get reference to sensors and create database
+        sensorManager = applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
+        gyroscope = sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
+
+        dataStorage = DataStorage(applicationContext)
+
+        applicationContextSet = true
+    }
 
     fun setOnStatusChangeListener(l: () -> Unit) {
         statusChangeListener = l
@@ -42,20 +53,9 @@ object DataCollector: SensorEventListener {
         statusChangeListener?.invoke()
     }
 
-    fun start(applicationContext: Context) {
+    fun start() {
         if (isRunning) {
             return
-        }
-
-        // If context not already set, get reference to sensors and create database
-        if (!applicationContextSet) {
-            sensorManager = applicationContext.getSystemService(Context.SENSOR_SERVICE) as SensorManager
-            accelerometer = sensorManager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-            gyroscope = sensorManager?.getDefaultSensor(Sensor.TYPE_GYROSCOPE)
-
-            dataStorage = DataStorage(applicationContext)
-
-            applicationContextSet = true
         }
 
         // Only set as running if both sensors can be found

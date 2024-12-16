@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 import org.nafai.theplutocodechallenge.data.DataCollector.SensorData
 
 // Class that persists sensor data to an SQLite database
-public class DataStorage(context: Context, val sizeBeforePersisting: Int = 500) :
+class DataStorage(context: Context, private val sizeBeforePersisting: Int = 500) :
     SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION) {
 
     private val accelerometerDataList: MutableList<SensorData> = mutableListOf()
@@ -21,15 +21,15 @@ public class DataStorage(context: Context, val sizeBeforePersisting: Int = 500) 
     private val scope = CoroutineScope(Dispatchers.IO)
 
     companion object {
-        private val DATABASE_NAME = "SensorDatabase"
-        private val DATABASE_VERSION = 1
-        private val TABLE_ACCELEROMETER = "AccelerometerDataTable"
-        private val TABLE_GYROSCOPE = "GyroscopeDataTable"
-        private val KEY_ID = "id"
-        private val KEY_TIMESTAMP = "timestamp"
-        private val KEY_X = "x"
-        private val KEY_Y = "y"
-        private val KEY_Z = "z"
+        private const val DATABASE_NAME = "SensorDatabase"
+        private const val DATABASE_VERSION = 1
+        private const val TABLE_ACCELEROMETER = "AccelerometerDataTable"
+        private const val TABLE_GYROSCOPE = "GyroscopeDataTable"
+        private const val KEY_ID = "id"
+        private const val KEY_TIMESTAMP = "timestamp"
+        private const val KEY_X = "x"
+        private const val KEY_Y = "y"
+        private const val KEY_Z = "z"
     }
 
     fun debugGetNumberOfAccelerometerDataEntries(): Int {
@@ -52,7 +52,6 @@ public class DataStorage(context: Context, val sizeBeforePersisting: Int = 500) 
                 // To be done
             } finally {
                 cursor?.close()
-                db.close()
             }
         }
 
@@ -87,19 +86,29 @@ public class DataStorage(context: Context, val sizeBeforePersisting: Int = 500) 
 
     fun flushData() {
         if (accelerometerDataList.isNotEmpty()) {
-            storeSensorData(TABLE_ACCELEROMETER, accelerometerDataList.toList())
+            accelerometerDataList.toList().let {
+                scope.launch {
+                    storeSensorData(TABLE_ACCELEROMETER, it)
+                }
+            }
             accelerometerDataList.clear()
         }
         if (gyroscopeDataList.isNotEmpty()) {
-            storeSensorData(TABLE_GYROSCOPE, gyroscopeDataList.toList())
+            gyroscopeDataList.toList().let {
+                scope.launch {
+                    storeSensorData(TABLE_GYROSCOPE, it)
+                }
+            }
             gyroscopeDataList.clear()
         }
     }
 
+    // Calling storeSensorData from a thread will block it if another transaction is already in progress
     private fun storeSensorData(tableName: String, data: List<SensorData>) {
-        println("Storing $tableName data")
+        println("Storing ${data.count()} $tableName data")
 
         this.writableDatabase?.let { db ->
+            // Ensure all inserts are done in same transaction
             db.transaction {
                 for (dataEntry in data) {
                     val contentValues = ContentValues()
@@ -112,7 +121,6 @@ public class DataStorage(context: Context, val sizeBeforePersisting: Int = 500) 
                     // React to success == false, not implemented yet
                 }
             }
-            db.close()
         }
     }
 
